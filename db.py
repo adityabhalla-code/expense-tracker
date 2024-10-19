@@ -1,4 +1,5 @@
 from operator import index
+from unicodedata import category
 
 from utils import print_waring , print_update
 from contextlib import contextmanager
@@ -74,14 +75,16 @@ class handleDb:
             if df.empty:
                 print_waring("---NO DATA !! PLEASE ADD AN EXPENSE")
             else:
+                print("="*100)
                 print(df)
+                print("="*100)
 
     def save_db(self):
         with self.session_scope() as session:
             rows = session.execute('SELECT * FROM expense').fetchall()
             df = pd.DataFrame(rows, columns=['ID', 'Date', 'Category', 'Amount', 'Description'])
             if not df.empty:
-                file_name = os.path.join(os.getcwd(),f'expense_resport_{today}.csv')
+                file_name = os.path.join(os.getcwd(),f'expense_report_{today}.csv')
                 df.to_csv(file_name,index=False)
                 print_update(f"DATA WRITTEN TO DIRECTORY---{os.getcwd()}")
                 print_update(f"FILE NAME--{file_name}")
@@ -161,15 +164,18 @@ class handleDb:
         df = pd.read_csv(file_path)
         print_update("DATA RECEIVED TO BE ADDED TO DB")
         print(df)
-        with self.session_scope() as session:
-            for index, row in df.iterrows():
-                try:
+        for index, row in df.iterrows():
+            category = row['Category']
+            self.handle_category(category)
+            try:
+                with self.session_scope() as session:
                     session.execute('''
                     INSERT INTO expense (ID, Date, Category, Amount, Description)
                     VALUES (?, ?, ?, ?, ?)
                     ''', (row['ID'], row['Date'], row['Category'], row['Amount'], row['Description']))
-                except sqlite3.IntegrityError:
-                    print(f"Duplicate entry for {row['Date']}, {row['Category']}, {row['Amount']} not inserted.")
-
+            except sqlite3.IntegrityError:
+                print(f"Duplicate entry for {row['Date']}, {row['Category']}, {row['Amount']} not inserted.")
+            except KeyError:
+                print_waring(f"Kindly please check the file, the columns should be [ID Date Category  Amount Description]")
 
 

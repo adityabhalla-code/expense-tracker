@@ -7,13 +7,14 @@ import re
 db_handler = handleDb()
 
 def display_menu():
+    print_update("--SELECT BELOW OPTIONS TO PROCEED AHEAD")
     print("1: Add expense")
     print("2: View expenses")
     print("3: Track budget")
     print("4: Save expenses")
     print("5: Load Budget from csv")
     print("6: Exit")
-    user_input = input("Enter the option of your choice:")
+    user_input = input("user option :")
     return user_input
 
 class ValidateExpense:
@@ -41,7 +42,7 @@ class ValidateExpense:
 
 
 if __name__ == "__main__":
-    print("----EXPENSE TRACKER---")
+    print_update("\n----EXPENSE TRACKER---\n")
     while True:
         user_input = display_menu()
         if user_input=="1":
@@ -51,7 +52,12 @@ if __name__ == "__main__":
             get_exist_categories = [x for x in get_exist_categories if x!="-"]
             category = input(f"Select the category or add new category :{get_exist_categories}") or "-"
             db_handler.handle_category(category)
-            amount = input("Enter the amount:") or "-"
+            amount = input("Enter the amount:") #or "-"
+            try:
+                amount = int(amount)
+            except ValueError:
+                print_waring('Kindly provide integer for amount')
+                amount = "-"
             description = input("Enter the description:") or "-"
             category,amount,description  = ValidateExpense(category,amount,description).is_valid()
             db_handler.add_entry(category,amount,description)
@@ -62,25 +68,26 @@ if __name__ == "__main__":
             if is_true:
                 user_input = input(f"DO YOU WANT TO OVERRIDE THE BUDGET [y/n]")
                 if user_input == "y":
-                    user_budget = int(input("PLEASE ENTER THE MONTHLY BUDGET:"))
-                    if user_budget  and isinstance(user_budget,int):
+                    user_budget = input("PLEASE ENTER THE MONTHLY BUDGET:")
+                    try:
+                        user_budget = int(user_budget)
                         db_handler.update_budget(user_budget)
-                    else:
+                    except ValueError:
                         print_waring("INCORRECT FORMAT FOR BUDGET, PLEASE TRY AGAIN !!")
                 elif user_input == "n":
                     print_update("RETURNING TO MAIN MENU !!")
                     user_input = display_menu()
             if not is_true:
-                user_budget = int(input("PLEASE ENTER THE MONTHLY BUDGET:"))
-                if user_budget and isinstance(user_budget,int):
+                user_budget = input("PLEASE ENTER THE MONTHLY BUDGET:")
+                try:
+                    user_budget = int(user_budget)
                     db_handler.update_budget(user_budget)
-                else:
+                except ValueError:
                     print_waring("INCORRECT FORMAT FOR BUDGET, PLEASE TRY AGAIN !!")
-
-
         elif user_input == "4":
             db_handler.save_db()
         elif user_input == "5":
+            print_update("PLEASE PROVIDE THE FILE PATH--")
             print_waring("MAKE SURE THE FILE CONTAINS FOLLOWING HEADERS-[ID Date Category  Amount Description]")
             file_path = input("please provide file path:")
             path = Path(file_path)
