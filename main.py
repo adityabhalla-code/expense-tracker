@@ -50,14 +50,19 @@ if __name__ == "__main__":
             # user_date = input("Enter to proceed or provide a date of your choice in format YYYY-MM-DD:")
             get_exist_categories = db_handler.handle_category()
             get_exist_categories = [x for x in get_exist_categories if x!="-"]
-            category = input(f"Select the category or add new category :{get_exist_categories}") or "-"
-            db_handler.handle_category(category)
+            category = input(f"Select the category or add new category :{get_exist_categories}") #or "-"
+            print(f"-----&{category}&----------")
+            if category:
+                db_handler.handle_category(category)
+            else:
+                print_waring("PLEASE PROVIDE A CATEGORY!!")
+                continue
             amount = input("Enter the amount:") #or "-"
             try:
                 amount = int(amount)
             except ValueError:
                 print_waring('Kindly provide integer for amount')
-                amount = "-"
+                continue
             description = input("Enter the description:") or "-"
             category,amount,description  = ValidateExpense(category,amount,description).is_valid()
             db_handler.add_entry(category,amount,description)

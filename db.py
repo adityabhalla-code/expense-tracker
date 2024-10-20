@@ -1,6 +1,3 @@
-from operator import index
-from unicodedata import category
-
 from utils import print_waring , print_update
 from contextlib import contextmanager
 from datetime import date
@@ -53,7 +50,7 @@ class handleDb:
                 self.connection.commit()
                 # print(f"Data committed to db")
         except Exception as e:
-            print(f"Exception occured in db connection, rolling back -- {e}")
+            print(f"exception occured in db connection, rolling back -- {e}")
             self.connection.rollback()
             raise
         finally:
@@ -61,11 +58,13 @@ class handleDb:
 
 
     def add_entry(self,category,amount,description):
+        self.check_budget()
         with self.session_scope() as session:
             session.execute("""
             INSERT INTO expense (date , category , amount , description)
             VALUES (?,?,?,?)
             """,(today,category,amount,description))
+            print_update(f"entry done to db!")
 
     def display_db(self):
         with self.session_scope(False) as session:
@@ -118,9 +117,15 @@ class handleDb:
                 """).fetchone()
             if existing_budget:
                 print_update(f"FOR THE MONTH--{month}\nEXISTING BUDGET FOUND ----{existing_budget[0]}")
-                total_expense = session.execute('SELECT SUM(Amount) FROM expense').fetchone()[0]
+                # total_expense = session.execute('SELECT SUM(Amount) FROM expense').fetchone()[0]
+                total_expense = self.get_total_expense()
                 if total_expense:
                     print_update(f"TOTAL EXPENSES INCURRED---{total_expense}")
+                    existing_budget = existing_budget[0]
+                    if total_expense > existing_budget:
+                        print_waring(f"You have exceeded the monthly budget by ---{total_expense-existing_budget}")
+                    elif total_expense < existing_budget:
+                        print_update(f"You have {existing_budget-total_expense} amount left to spend for the month---{month}")
                     return True
                 else:
                     print(f"NO EXPENSES ADDED!!")
@@ -179,3 +184,13 @@ class handleDb:
                 print_waring(f"Kindly please check the file, the columns should be [ID Date Category  Amount Description]")
 
 
+    def get_total_expense(self):
+        with self.session_scope(False) as session:
+            return session.execute('SELECT SUM(Amount) FROM expense').fetchone()[0]
+
+            # total_expenses = session.execute(
+            #     """
+            #     SELECT SUM(Amount) FROM expense
+            #     """
+            # ).fetchone()[0]
+            # return total_expenses
